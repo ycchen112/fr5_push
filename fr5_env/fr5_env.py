@@ -24,6 +24,10 @@ class fr5_env(gym.Env):
         self.current_step = 0
         self.viewer = None
 
+        self.object_name = "board" 
+        self.slot_name = "board_site"
+        self.notch_pos_offset = np.array([-0.2, 0, 0])
+
     def step(self, action):
         self.data.ctrl[:] = action
         mujoco.mj_step(self.model, self.data)
@@ -57,6 +61,12 @@ class fr5_env(gym.Env):
         # 获取机械臂关节位置速度
         joint_pos = self.data.qpos[:6]
         joint_vel = self.data.qvel[:6]
+
+        object_pos = self.data.body(self.object_name).xpos      # 板的位置
+        object_quat = self.data.body(self.object_name).xquat    # 板的姿态
+        slot_pos = self.data.site(self.slot_name).xpos          # 目标位置
+
+        return np.concatenate([joint_pos, joint_vel, object_pos, object_quat, slot_pos])
 
     def _comput_reward():
         
