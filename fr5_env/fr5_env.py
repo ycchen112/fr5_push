@@ -20,6 +20,7 @@ class fr5_env(gym.Env):
 
         # 观测空间 6关节角度 + 6关节速度 + 3物体位置 + 4物体姿态 + 3卡空位置
         self.observation_space = spaces.Box(low=-np.inf, high=-np.inf, shape=(21,), dtype=np.float32)
+
         self.max_step = 100
         self.current_step = 0
         self.viewer = None
@@ -41,7 +42,16 @@ class fr5_env(gym.Env):
 
     def reset(self, *, seed = None, options = None):
         self.current_step = 0
-        self.observation = self.data.qpos.flatten()
+        mujoco.mj_resetData(self.model, self.data)
+        if seed is not None:
+            np.random.seed(seed)
+        
+        # 初始化板的位置
+        # todo：初始化错
+        object_pos = self.data.site(self.slot_name).xpos + np.random.uniform(-0.1, 0.1, 3)
+        self.data.body(self.object_name).xpos = object_pos
+        mujoco.mj_forward(self.model, self.data)
+
         return self.observation, {}
     
     def render(self, mode="human"):
@@ -50,6 +60,13 @@ class fr5_env(gym.Env):
                 self.viewer = mujoco.viewer.launch_passive(self.model, self.data)
             else:
                 self.viewer.sync()
+
+            object_pos = self.data.body(self.object_name).xpos
+            notch_pos = object_pos + self.notch_pos_offset      # 缺口中心位置 
+            slot_pos = self.data.site(self.slot_name).xpos
+            dist_to_slot = np.linalg.norm(object_pos - slot_pos)
+            print(f"Board pos: {object_pos}, Notch pos: {notch_pos}, \
+                  Slot pos: {slot_pos}, Distance: {dist_to_slot:.3f}")
         return 
     
     def close(self):
@@ -68,10 +85,24 @@ class fr5_env(gym.Env):
 
         return np.concatenate([joint_pos, joint_vel, object_pos, object_quat, slot_pos])
 
-    def _comput_reward():
-        
+    def _comput_reward(self):
+        # todo：换计算方法
+        object_pos = self.data.body(self.object_name).xpos
+        slot_pos = self.datqa.body(self.slot_name).xpos
+        dist_to_slot = np.linalg.norm(object_pos - slot_pos)
+        reward = -dist_to_slot
+        if dist_to_slot < 0.01:
+            reward += 100.0
+        action_penalty = -0.01 * np.sum(np.square(self.data.ctrl))
 
-        return reward
+        return reward + action_penalty
+    
+    def _is_success(self):
+        # todo: 验证能不能作为成果条件
+        object_pos = self.data.body(self.object_name).xpos
+        slot_pos = self.data.site(self.slot_name).xpos
+
+        return np.linalg.norm(object_pos - slot_pos) < 0.01
 
 
 
