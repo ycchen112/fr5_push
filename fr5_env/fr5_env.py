@@ -19,7 +19,11 @@ class fr5_env(gym.Env):
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(6,), dtype=np.float32)
 
         # 观测空间 6关节角度 + 6关节速度 + 3物体位置 + 4物体姿态 + 3卡空位置
-        self.observation_space = spaces.Box(low=-np.inf, high=-np.inf, shape=(21,), dtype=np.float32)
+        self.observation_space = spaces.Box(
+            low=np.array([-np.pi]*6 + [-10.0]*6 + [-1.0]*3 + [-1.0]*4 + [-1.0]*3),
+            high=np.array([np.pi]*6 + [10.0]*6 + [1.0]*3 + [1.0]*4 + [1.0]*3),
+            dtype=np.float32
+        )
 
         self.max_step = 100
         self.current_step = 0
@@ -34,8 +38,7 @@ class fr5_env(gym.Env):
         mujoco.mj_step(self.model, self.data)
         self.current_step += 1
         done = self.current_step >= self.max_step
-        reward = 0.1
-
+        reward = reward = self._compute_reward()
         obs = self._get_obs()
 
         return obs, reward, done, {}
@@ -52,7 +55,9 @@ class fr5_env(gym.Env):
         self.data.body(self.object_name).xpos = object_pos
         mujoco.mj_forward(self.model, self.data)
 
-        return self.observation, {}
+        self.data.qvel[:] = 0
+
+        return self._get_obs(), {}
     
     def render(self, mode="human"):
         if mode == "human":
@@ -85,11 +90,12 @@ class fr5_env(gym.Env):
 
         return np.concatenate([joint_pos, joint_vel, object_pos, object_quat, slot_pos])
 
-    def _comput_reward(self):
-        # todo：换计算方法
+    def _compute_reward(self):
         object_pos = self.data.body(self.object_name).xpos
-        slot_pos = self.datqa.body(self.slot_name).xpos
-        dist_to_slot = np.linalg.norm(object_pos - slot_pos)
+        notch_pos = object_pos + self.notch_pos_offset
+        slot_pos = self.data.site(self.slot_name).xpos
+        dist_to_slot = np.linalg.norm(notch_pos - slot_pos)
+
         reward = -dist_to_slot
         if dist_to_slot < 0.01:
             reward += 100.0
@@ -98,11 +104,10 @@ class fr5_env(gym.Env):
         return reward + action_penalty
     
     def _is_success(self):
-        # todo: 验证能不能作为成果条件
         object_pos = self.data.body(self.object_name).xpos
+        notch_pos = object_pos + self.notch_pos_offset
         slot_pos = self.data.site(self.slot_name).xpos
-
-        return np.linalg.norm(object_pos - slot_pos) < 0.01
+        return np.linalg.norm(notch_pos - slot_pos) < 0.01
 
 
 
