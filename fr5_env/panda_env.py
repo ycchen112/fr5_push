@@ -15,8 +15,33 @@ class fr5_env(gym.Env):
         self.model = mujoco.MjModel.from_xml_path(model_path)
         self.data = mujoco.MjData(self.model)
 
+        # 动作上下界
+        low_act = np.array([
+            -2.8973,
+            -1.7628,
+            -2.8973,
+            -3.0718,
+            -2.8973,
+            -0.0175,
+            -2.8973,
+            0.0,
+            0.0
+        ], dtype=np.float32)
+
+        high_act = np.array([
+            2.8973,
+            1.7628,
+            2.8973,
+            -0.0698,
+            2.8973,
+            3.7525,
+            2.8973,
+            0.04,
+            0.04
+        ], dtype=np.float32)
+
         # 动作空间 6关节
-        self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(6,), dtype=np.float32)
+        self.action_space = spaces.Box(low=low_act, high=high_act, shape=(9,), dtype=np.float32)
 
         # 观测空间 6关节角度 + 6关节速度 + 3物体位置 + 4物体姿态 + 3卡空位置
         self.observation_space = spaces.Box(
