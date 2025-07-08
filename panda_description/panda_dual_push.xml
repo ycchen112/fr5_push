@@ -1,7 +1,7 @@
 <mujoco model="panda scene">
     <compiler angle="radian" meshdir="./meshes/" autolimits="true"/>
 
-    <option integrator="implicitfast" noslip_iterations="3" timestep="0.002" cone="pyramidal">
+    <option integrator="implicitfast" noslip_iterations="3" timestep="0.002" cone="pyramidal" gravity="0 0 -9.81">
       <flag multiccd="enable" warmstart="enable"/>
     </option>
 
@@ -38,6 +38,8 @@
         <geom name="board_middle" type="box" pos="0 0 0" size="0.18 0.005 0.0025" rgba="0.5 0.5 0.5 1"/>
         <geom name="board_put" type="box" pos="-0.19 0 0" size="0.01 0.005 0.0025" rgba="0.5 0.5 0.5 1"/> 
         <site name="board_site" pos="0.18 0 0" size="0.005 0.005 0.05" rgba="1 0 0 1" type="sphere"/>
+        <site name="push_site_l" pos="0.03 -0.3 0" size="0.01" rgba="1 0 0 1" type="sphere"/>
+        <site name="push_site_r" pos="0.03 0.3 0" size="0.01" rgba="1 0 0 1" type="sphere"/>
       </body>
 
       <body name="peg" pos="1.0 0 0.005">

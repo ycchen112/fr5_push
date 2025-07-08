@@ -112,7 +112,7 @@
     <body name="pillar" pos="0 0 0">
       <geom type="box" size="0.2 0.1 1.0" rgba="0.5 0.5 0.5 1"/>
 
-      <!-- 左侧机械臂 -->
+      <!-- 左侧机械臂 y轴负方向-->
       <body name="link0_l" childclass="panda" pos="0.1 -0.1 0.7" euler="1.57 0 0">
         <inertial mass="0.629769" pos="-0.041018 -0.00014 0.049974" fullinertia="0.00315 0.00388 0.004285 8.2904e-7 0.00015 8.2299e-6"/>
         <geom mesh="link0_0" material="off_white" class="visual"/>
@@ -397,5 +397,7 @@
   <!-- <sensor>
     <framepos objtype="body" objname="ee_center_body_l" reftype="body" refname="pillar"/>
     <framepos objtype="body" objname="ee_center_body_r" reftype="body" refname="pillar"/>
+    <force name="force_sensor" site="force_sensor_site"/>
+    <torque name="torque_sensor" site="force_sensor_site"/>
   </sensor> -->
 </mujoco>
